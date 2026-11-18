@@ -1,0 +1,7 @@
+# Chapter 1: Introduction to Cellular Energetics
+Cellular respiration is the set of metabolic reactions that convert biochemical energy into ATP.
+Glycolysis is the first metabolic pathway, converting glucose into pyruvate with a net yield of 2 ATP.
+Phosphofructokinase-1 is the key pacemaker enzyme regulated allosterically by ATP and AMP.
+
+# Chapter 2: The Citric Acid Cycle
+Occurring in the mitochondrial matrix, acetyl-CoA is oxidized to produce NADH, FADH2, and GTP.

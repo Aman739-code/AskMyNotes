@@ -1,0 +1,171 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-paper: #F5F2EA;
+    --color-ink: #14120F;
+    --color-night: #0F1411;
+    --color-night-raised: #18201B;
+    --color-acid: #C8F135;
+    --color-tangerine: #FF6B3D;
+    --color-lilac: #BDB0FF;
+    --color-forest: #12372A;
+    --color-success: #2FBF71;
+    --color-danger: #E5484D;
+  }
+
+  html {
+    @apply font-body text-ink antialiased;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-paper text-ink;
+    min-height: 100vh;
+  }
+
+  .dark body {
+    @apply bg-night text-paper;
+  }
+
+  /* Focus rings */
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-acid rounded-sm;
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-ink/20 rounded-full;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    @apply bg-paper/20;
+  }
+
+  /* Selection */
+  ::selection {
+    @apply bg-acid text-ink;
+  }
+
+  /* Grid paper background for empty states */
+  .bg-grid {
+    background-image: 
+      linear-gradient(rgba(20, 18, 15, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(20, 18, 15, 0.05) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .dark .bg-grid {
+    background-image: 
+      linear-gradient(rgba(245, 242, 234, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(245, 242, 234, 0.05) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  /* Dotted background for empty states */
+  .bg-dots {
+    background-image: radial-gradient(circle, rgba(20, 18, 15, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  .dark .bg-dots {
+    background-image: radial-gradient(circle, rgba(245, 242, 234, 0.08) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-acid text-ink font-semibold px-5 py-2.5 rounded-btn border border-ink 
+           shadow-offset hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px]
+           active:translate-x-[3px] active:translate-y-[3px] active:shadow-none
+           transition-all duration-120 ease-out select-none;
+  }
+
+  .btn-secondary {
+    @apply bg-paper dark:bg-nightRaised text-ink dark:text-paper font-medium px-5 py-2.5 
+           rounded-btn border border-ink dark:border-paper/20
+           shadow-offset-sm hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]
+           active:translate-x-[2px] active:translate-y-[2px] active:shadow-none
+           transition-all duration-120 ease-out select-none;
+  }
+
+  .btn-ghost {
+    @apply text-ink dark:text-paper font-medium px-4 py-2 rounded-btn
+           hover:bg-ink/5 dark:hover:bg-paper/5
+           active:bg-ink/10 dark:active:bg-paper/10
+           transition-all duration-120 ease-out select-none;
+  }
+
+  .btn-danger {
+    @apply bg-danger text-white font-semibold px-5 py-2.5 rounded-btn border border-danger
+           hover:bg-danger/90 active:translate-y-[1px]
+           transition-all duration-120 ease-out select-none;
+  }
+
+  .card {
+    @apply bg-paper dark:bg-nightRaised border border-ink/[0.14] dark:border-paper/[0.14] 
+           rounded-card p-5;
+  }
+
+  .card-elevated {
+    @apply card shadow-offset;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-mono
+           font-medium;
+  }
+
+  .chip-lilac {
+    @apply chip bg-lilac/20 text-lilac dark:text-lilac;
+  }
+
+  .chip-acid {
+    @apply chip bg-acid/20 text-forest dark:text-acid;
+  }
+
+  .chip-tangerine {
+    @apply chip bg-tangerine/20 text-tangerine;
+  }
+
+  .input {
+    @apply w-full bg-transparent border border-ink/[0.14] dark:border-paper/[0.14] 
+           rounded-btn px-4 py-2.5 text-sm font-body
+           placeholder:text-ink/40 dark:placeholder:text-paper/40
+           focus:border-acid focus:ring-1 focus:ring-acid
+           transition-colors duration-120;
+  }
+
+  .skeleton {
+    @apply bg-ink/[0.08] dark:bg-paper/[0.08] animate-pulse-soft rounded-btn;
+  }
+
+  /* Streaming text caret */
+  .stream-caret::after {
+    content: '';
+    @apply inline-block w-0.5 h-[1.1em] bg-acid ml-0.5 animate-caret align-text-bottom;
+  }
+}
