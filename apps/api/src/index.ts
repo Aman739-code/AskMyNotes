@@ -20,6 +20,7 @@ const logger = createLogger('server');
 
 const app = express();
 const port = parseInt(process.env.PORT || '3001', 10);
+const isServerless = process.env.VERCEL === '1';
 
 // Security & Parsing Middleware
 app.use(helmet());
@@ -61,8 +62,8 @@ app.get('/api/usage/limits', requireAuth, async (req, res) => {
 // Centralized Error Handling
 app.use(errorHandler);
 
-// Start Ingestion Worker (co-located in the same service for Render Free tier)
-if (process.env.NODE_ENV !== 'test') {
+// Start listener/worker only outside serverless platforms.
+if (process.env.NODE_ENV !== 'test' && !isServerless) {
   try {
     startIngestionWorker();
   } catch (err: any) {
@@ -84,3 +85,4 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 export { app };
+export default app;

@@ -8,7 +8,11 @@ import { requireAuth } from '../middleware/auth.js';
 import { rateLimitMiddleware } from '../lib/rateLimit/index.js';
 import { enqueueIngestionJob } from '../lib/queue/index.js';
 import { supabase, isSupabaseConfigured } from '../db/supabase.js';
-import { inMemoryDocumentsStore, inMemoryChunksStore } from '../services/ingestion.js';
+import {
+  inMemoryDocumentsStore,
+  inMemoryChunksStore,
+  processDocumentIngestion,
+} from '../services/ingestion.js';
 import { generateFlashcardsForDocument, generateQuizForDocument } from '../services/study.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { createLogger } from '../lib/logger/index.js';
@@ -168,13 +172,24 @@ documentsRouter.post(
     });
 
     // Enqueue BullMQ Ingestion Job
-    await enqueueIngestionJob({
-      documentId,
-      userId,
-      filePath: file.path,
-      title,
-      mimeType: file.mimetype,
-    });
+    if (process.env.VERCEL === '1') {
+      await processDocumentIngestion({
+        documentId,
+        userId,
+        filePath: file.path,
+        title,
+        mimeType: file.mimetype,
+      });
+      await fs.unlink(file.path).catch(() => {});
+    } else {
+      await enqueueIngestionJob({
+        documentId,
+        userId,
+        filePath: file.path,
+        title,
+        mimeType: file.mimetype,
+      });
+    }
 
     res.status(202).json({
       documentId,
