@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run build:api",
+  "buildCommand": "npm install --include=dev && npm run build:api",
   "functions": {
     "apps/api/api/index.ts": {
       "maxDuration": 60
