@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import { defaultLlmService } from '../lib/llm/provider.js';
 import { hybridRetrieve, toCitations } from './retrieval.js';
 import { CacheService } from '../lib/cache/index.js';
@@ -23,8 +23,8 @@ export async function handleChatStream({
   documentIds,
   res,
 }: ChatStreamParams): Promise<void> {
-  const currentConvId = conversationId || uuidv4();
-  const assistantMessageId = uuidv4();
+  const currentConvId = conversationId || randomUUID();
+  const assistantMessageId = randomUUID();
 
   // SSE response headers
   res.writeHead(200, {
@@ -38,9 +38,13 @@ export async function handleChatStream({
   };
 
   try {
+    const exhaustiveQuery = /\b(all|every|complete|full|entire|list|formula|formulas|equation|equations)\b/i.test(message);
+
     // Step 1: Check Answer Cache
     const cacheKey = CacheService.getQueryCacheKey(message, documentIds);
-    const cached = await CacheService.get<{ answer: string; citations: any[] }>(cacheKey);
+    const cached = exhaustiveQuery
+      ? null
+      : await CacheService.get<{ answer: string; citations: any[] }>(cacheKey);
 
     if (cached) {
       logger.info({ message }, 'Serving cached answer');
@@ -61,11 +65,12 @@ export async function handleChatStream({
     }
 
     // Step 2: Hybrid Retrieval (pgvector + full-text search + RRF)
-    const retrievedChunks = await hybridRetrieve(message, userId, documentIds, 6);
+    const retrievalCount = exhaustiveQuery ? 20 : 6;
+    const retrievedChunks = await hybridRetrieve(message, userId, documentIds, retrievalCount);
 
     // Guardrail Check: If retrieval confidence is low or no chunks returned
     const maxScore = retrievedChunks.length > 0 ? retrievedChunks[0].similarity : 0;
-    const isLowConfidence = retrievedChunks.length === 0 || (maxScore > 0 && maxScore < 0.25);
+    const isLowConfidence = retrievedChunks.length === 0;
 
     if (isLowConfidence) {
       sendEvent('token', { content: "I couldn't find this in your notes." });
@@ -97,8 +102,13 @@ export async function handleChatStream({
       `1. Answer the student's question ONLY using the factual context provided below.\n` +
       `2. If the context does not contain enough information to answer, state: "I couldn't find this in your notes." Do not make assumptions or extrapolate outside the text.\n` +
       `3. When making statements from a source, include inline citations using this exact format: [p.<PageNumber> · <DocumentTitle>]. For example: [p.14 · BIO-201.pdf].\n` +
-      `4. Be concise, editorial, and clear. Format key takeaways with bolding or bullet points when helpful.\n\n` +
-      `CONTEXT FROM NOTES:\n` +
+      `4. Format the answer in readable Markdown. Use headings, bold text, bullets, and numbered lists where helpful.\n` +
+      `5. When the notes contain a formula, present it in LaTeX using \`$$ ... $$\` for a display formula or \`$ ... $\` for an inline formula. Define each variable in plain language.\n` +
+      `6. Do not repeat raw Markdown delimiters literally. Use proper Markdown and LaTeX syntax.\n` +
+      (exhaustiveQuery
+        ? `7. The user explicitly requested a complete or comprehensive answer. Scan every supplied source chunk before responding. Include equations, named formulas, and explicit mathematical relationships such as price equals marginal cost or price greater than marginal cost. Do not stop after the first formula. Number every distinct formula or relationship and give a separate variable explanation for each. If no formula or mathematical relationship exists in the supplied context, state that clearly.\n`
+        : ``) +
+      `\nCONTEXT FROM NOTES:\n` +
       contextText;
 
     let fullAnswer = '';
@@ -185,7 +195,7 @@ async function persistChatMessage({
 
       // Insert user message
       await supabase.from('messages').insert({
-        conversationId,
+        conversation_id: conversationId,
         user_id: userId,
         role: 'user',
         content: userPrompt,
@@ -193,7 +203,7 @@ async function persistChatMessage({
 
       // Insert assistant message
       await supabase.from('messages').insert({
-        conversationId,
+        conversation_id: conversationId,
         user_id: userId,
         role: 'assistant',
         content: assistantAnswer,

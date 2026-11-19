@@ -178,7 +178,7 @@ export function AdminMetrics() {
                   Google Gemini + Groq Fallback
                 </div>
                 <div className="font-mono text-[11px] text-ink/50 dark:text-paper/50">
-                  text-embedding-004 & Gemini 1.5 Flash
+                  gemini-embedding-001 & Gemini Flash Lite
                 </div>
               </div>
             </div>

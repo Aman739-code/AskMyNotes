@@ -26,17 +26,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 
   const authHeader = req.headers.authorization;
 
-  // Demo / Dev mode fallback if Supabase is not configured or in dev
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    if (!isSupabaseConfigured || process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
-      req.user = {
-        id: '00000000-0000-0000-0000-000000000001',
-        email: 'demo@student.edu',
-      };
-      next();
-      return;
-    }
-
     res.status(401).json({
       error: 'unauthorized',
       message: 'Missing or invalid Authorization header',
@@ -67,10 +57,8 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     }
   }
 
-  // Fallback demo user
-  req.user = {
-    id: '00000000-0000-0000-0000-000000000001',
-    email: 'student@example.com',
-  };
-  next();
+  res.status(401).json({
+    error: 'unauthorized',
+    message: 'Invalid or expired auth session',
+  });
 }

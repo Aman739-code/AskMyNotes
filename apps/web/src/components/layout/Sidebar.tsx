@@ -30,14 +30,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const { data: conversations = [], refetch: refetchConversations } = useQuery({
     queryKey: ['conversations'],
     queryFn: async () => {
-      try {
-        return await api.get<Array<{ id: string; title: string; createdAt: string }>>('/conversations');
-      } catch {
-        return [
-          { id: 'conv-demo-1', title: 'Cell Respiration & Glycolysis', createdAt: new Date().toISOString() },
-          { id: 'conv-demo-2', title: 'Macroeconomics Midterm Review', createdAt: new Date().toISOString() },
-        ];
-      }
+      return api.get<Array<{ id: string; title: string; createdAt: string }>>('/conversations');
     },
   });
 
@@ -45,14 +38,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const { data: documents = [] } = useQuery({
     queryKey: ['documents'],
     queryFn: async () => {
-      try {
-        return await api.get<Array<{ id: string; title: string }>>('/documents');
-      } catch {
-        return [
-          { id: 'doc-demo-1', title: 'Lecture 4 - Bioenergetics.pdf' },
-          { id: 'doc-demo-2', title: 'Econ Chapter 3.md' },
-        ];
-      }
+      return api.get<Array<{ id: string; title: string }>>('/documents');
     },
   });
 

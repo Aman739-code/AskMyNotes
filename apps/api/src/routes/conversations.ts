@@ -36,15 +36,7 @@ conversationsRouter.get('/', async (req: Request, res: Response) => {
     return;
   }
 
-  // Fallback demo chats
-  res.json([
-    {
-      id: 'conv-demo-1',
-      title: 'Cell Respiration & Glycolysis',
-      documentIds: ['doc-demo-1'],
-      createdAt: new Date().toISOString(),
-    },
-  ]);
+  res.json([]);
 });
 
 /**

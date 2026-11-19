@@ -15,8 +15,8 @@ flowchart TD
     SupabaseDB["Supabase Postgres<br/>pgvector (HNSW) + Full-Text Search (GIN)"]
     SupabaseStorage["Supabase Storage<br/>Private Bucket (Signed Access)"]
     UpstashRedis["Upstash Redis (Free Tier)<br/>BullMQ Queue + Sliding Window Rate Limiter + Cache"]
-    Gemini["Google Gemini API (Free Tier)<br/>text-embedding-004 & gemini-1.5-flash"]
-    Groq["Groq API (Free Tier Fallback)<br/>llama-3.1-8b-instant"]
+    Gemini["Google Gemini API (Free Tier)<br/>gemini-embedding-001 & gemini-flash-lite-latest"]
+    Groq["Groq API (Free Tier Fallback)<br/>openai/gpt-oss-20b"]
 
     User -->|"Google OAuth"| SupabaseAuth
     User -->|"Web App UI"| Vercel

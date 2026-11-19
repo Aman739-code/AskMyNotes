@@ -1,5 +1,4 @@
 import crypto from 'crypto';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { EMBEDDING_DIMENSION } from '@askmynotes/shared';
 import { createLogger } from '../logger/index.js';
 
@@ -16,14 +15,14 @@ export interface EmbeddingProvider {
 export class GeminiEmbeddingProvider implements EmbeddingProvider {
   name = 'gemini';
   dimension = EMBEDDING_DIMENSION; // 768
-  private client: GoogleGenerativeAI | null = null;
-  private modelName = 'text-embedding-004';
+  private apiKey: string | null = null;
+  private modelName = 'gemini-embedding-001';
   private inMemoryCache = new Map<string, number[]>();
 
   constructor(apiKey?: string) {
     const key = apiKey || process.env.GEMINI_API_KEY;
     if (key && key !== 'your-gemini-api-key') {
-      this.client = new GoogleGenerativeAI(key);
+      this.apiKey = key;
     }
   }
 
@@ -37,17 +36,39 @@ export class GeminiEmbeddingProvider implements EmbeddingProvider {
       return this.inMemoryCache.get(hash)!;
     }
 
-    if (!this.client) {
-      // Deterministic pseudo-embedding for testing/demo without API keys
+    if (!this.apiKey) {
+      // Deterministic local embedding fallback used only without provider credentials.
       const pseudo = this.generateDeterministicVector(hash);
       this.inMemoryCache.set(hash, pseudo);
       return pseudo;
     }
 
     try {
-      const model = this.client.getGenerativeModel({ model: this.modelName });
-      const result = await model.embedContent(text);
-      const vector = result.embedding.values;
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${this.modelName}:embedContent`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': this.apiKey,
+          },
+          body: JSON.stringify({
+            model: `models/${this.modelName}`,
+            content: { parts: [{ text }] },
+            outputDimensionality: this.dimension,
+          }),
+        },
+      );
+      if (!response.ok) {
+        throw new Error(`Gemini embedding API error: ${response.status}`);
+      }
+      const result = await response.json() as {
+        embedding?: { values?: number[] };
+      };
+      const vector = result.embedding?.values;
+      if (!vector || vector.length !== this.dimension) {
+        throw new Error(`Unexpected Gemini embedding dimension: ${vector?.length ?? 0}`);
+      }
       this.inMemoryCache.set(hash, vector);
       return vector;
     } catch (err: any) {

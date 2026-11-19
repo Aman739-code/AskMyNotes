@@ -1,3 +1,5 @@
+import { supabase } from '@/lib/supabase';
+
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 class ApiClient {
@@ -8,15 +10,21 @@ class ApiClient {
   }
 
   private async getHeaders(): Promise<Record<string, string>> {
-    // Will add auth token in Phase 2
-    return {
-      'Content-Type': 'application/json',
-    };
+    const headers: Record<string, string> = {};
+    if (supabase) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        headers.Authorization = `Bearer ${session.access_token}`;
+      }
+    }
+    return headers;
   }
 
   async get<T>(path: string): Promise<T> {
     const headers = await this.getHeaders();
-    const res = await fetch(`${this.baseUrl}${path}`, { headers });
+    const res = await fetch(`${this.baseUrl}${path}`, {
+      headers: { ...headers, 'Content-Type': 'application/json' },
+    });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
       throw new ApiError(res.status, body.message || 'Request failed', body);
@@ -34,6 +42,20 @@ class ApiClient {
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       throw new ApiError(res.status, data.message || 'Request failed', data);
+    }
+    return res.json();
+  }
+
+  async upload<T>(path: string, body: FormData): Promise<T> {
+    const headers = await this.getHeaders();
+    const res = await fetch(`${this.baseUrl}${path}`, {
+      method: 'POST',
+      headers,
+      body,
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new ApiError(res.status, data.message || 'Upload failed', data);
     }
     return res.json();
   }
@@ -77,7 +99,11 @@ class ApiClient {
         const headers = await this.getHeaders();
         const res = await fetch(`${this.baseUrl}${path}`, {
           method: 'POST',
-          headers: { ...headers, Accept: 'text/event-stream' },
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json',
+            Accept: 'text/event-stream',
+          },
           body: JSON.stringify(body),
           signal: controller.signal,
         });

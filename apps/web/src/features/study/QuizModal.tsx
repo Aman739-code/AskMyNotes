@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Check, X, Sparkles, ArrowRight, RotateCcw, Award } from 'lucide-react';
 import { QuizQuestion } from '@askmynotes/shared';
 import { Button } from '@/components/ui/Button';
@@ -15,6 +16,14 @@ export function QuizModal({ questions, documentTitle, onClose }: QuizModalProps)
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [score, setScore] = useState(0);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
 
   if (questions.length === 0) {
     return null;
@@ -45,9 +54,13 @@ export function QuizModal({ questions, documentTitle, onClose }: QuizModalProps)
     setScore(0);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/50 dark:bg-black/70 backdrop-blur-xs select-none animate-fade-in">
-      <Card elevated className="w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 space-y-6">
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[100] h-[100dvh] w-[100vw] flex items-center justify-center p-4 bg-ink/75 dark:bg-black/85 backdrop-blur-sm select-none animate-fade-in"
+      role="dialog"
+      aria-modal="true"
+    >
+      <Card elevated className="relative z-[101] w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 space-y-6 bg-paper dark:bg-nightRaised">
         {!isFinished ? (
           <>
             {/* Header */}
@@ -88,7 +101,7 @@ export function QuizModal({ questions, documentTitle, onClose }: QuizModalProps)
 
             {/* Multiple Choice Options */}
             <div className="space-y-2.5">
-              {currentQ.options.map((option, idx) => {
+              {currentQ.options.map((option: string, idx: number) => {
                 const isSelected = selectedOption === idx;
                 const isCorrect = idx === currentQ.correctIndex;
                 let optionClasses = 'border-ink/15 dark:border-paper/15 hover:border-ink/40 bg-paper dark:bg-night';
@@ -181,6 +194,7 @@ export function QuizModal({ questions, documentTitle, onClose }: QuizModalProps)
           </div>
         )}
       </Card>
-    </div>
+    </div>,
+    document.body,
   );
 }

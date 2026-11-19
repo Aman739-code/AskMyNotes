@@ -63,17 +63,8 @@ export async function generateFlashcardsForDocument(
 
     return flashcards;
   } catch (err: any) {
-    logger.warn({ error: err.message }, 'Flashcard generation fallback');
-    // Deterministic fallback flashcards from chunk text
-    return chunks.slice(0, Math.min(count, chunks.length)).map((c, i) => ({
-      id: `fc-fallback-${i}`,
-      documentId,
-      userId,
-      front: `Core concept from ${c.sectionHeading || 'Section'} (p. ${c.pageNumber || 1})`,
-      back: c.content.slice(0, 200) + '...',
-      ease: 2.5,
-      dueAt: new Date().toISOString(),
-    }));
+    logger.error({ error: err.message }, 'Flashcard generation failed');
+    throw err;
   }
 }
 
@@ -122,22 +113,8 @@ export async function generateQuizForDocument(
       pageNumber: item.pageNumber || null,
     }));
   } catch (err: any) {
-    logger.warn({ error: err.message }, 'Quiz generation fallback');
-    return [
-      {
-        id: 'q-fb-1',
-        question: 'Which of the following best summarizes the primary finding described in this text?',
-        options: [
-          'The metabolic pathway is strictly regulated by energy availability',
-          'Enzymatic catalysis operates without allosteric effectors',
-          'Intracellular feedback is purely hormonal',
-          'Diffusion rates limit total cellular output',
-        ],
-        correctIndex: 0,
-        explanation: 'Energy balance (ATP/AMP ratio) governs regulatory enzyme activation.',
-        pageNumber: chunks[0]?.pageNumber || 1,
-      },
-    ];
+    logger.error({ error: err.message }, 'Quiz generation failed');
+    throw err;
   }
 }
 

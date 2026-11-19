@@ -18,6 +18,7 @@ export function Chat() {
   const [streamingText, setStreamingText] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [activeCitation, setActiveCitation] = useState<Citation | null>(null);
+  const [chatError, setChatError] = useState<string | null>(null);
   const [rateLimitInfo, setRateLimitInfo] = useState<{ message: string; retryAfter: number } | null>(null);
   const [selectedDocIds, setSelectedDocIds] = useState<string[]>(() => {
     const docQuery = searchParams.get('docs');
@@ -30,25 +31,7 @@ export function Chat() {
   const { data: documents = [] } = useQuery<Document[]>({
     queryKey: ['documents'],
     queryFn: async () => {
-      try {
-        return await api.get<Document[]>('/documents');
-      } catch {
-        return [
-          {
-            id: 'doc-demo-1',
-            userId: '00000000-0000-0000-0000-000000000001',
-            title: 'BIO-201 Cell Biology Lecture Notes.pdf',
-            filePath: '',
-            mimeType: 'application/pdf',
-            sizeBytes: 1024,
-            pageCount: 24,
-            status: 'ready',
-            progress: 100,
-            errorMessage: null,
-            createdAt: new Date().toISOString(),
-          },
-        ];
-      }
+      return api.get<Document[]>('/documents');
     },
   });
 
@@ -57,21 +40,7 @@ export function Chat() {
     queryKey: ['messages', conversationId],
     queryFn: async () => {
       if (!conversationId) return [];
-      try {
-        return await api.get<Message[]>(`/conversations/${conversationId}/messages`);
-      } catch {
-        return [
-          {
-            id: 'msg-1',
-            conversationId: conversationId || 'demo',
-            userId: '00000000-0000-0000-0000-000000000001',
-            role: 'assistant',
-            content: 'Hello! I am ready to answer any questions directly from your uploaded notes. Ask a question or click a suggestion below.',
-            citations: [],
-            createdAt: new Date().toISOString(),
-          },
-        ];
-      }
+      return api.get<Message[]>(`/conversations/${conversationId}/messages`);
     },
     enabled: !!conversationId,
   });
@@ -105,6 +74,7 @@ export function Chat() {
     setIsStreaming(true);
     setStreamingText('');
     setRateLimitInfo(null);
+    setChatError(null);
 
     // Optimistically add user message to list or state
     const userMsg: Message = {
@@ -156,8 +126,7 @@ export function Chat() {
                 retryAfter: 45,
               });
             } else {
-              // Demo fallback: simulate answer with citations
-              simulateLocalAnswer(prompt);
+              setChatError(errMsg || 'The chat request failed.');
             }
           },
         },
@@ -170,43 +139,11 @@ export function Chat() {
           retryAfter: err.retryAfterSeconds || 60,
         });
       } else {
-        simulateLocalAnswer(prompt);
+        setChatError('The chat request failed.');
       }
     }
   };
 
-  const simulateLocalAnswer = (prompt: string) => {
-    setIsStreaming(true);
-    let simulatedText = '';
-    const sampleAnswer =
-      `Based on your notes, here is the verified answer:\n\n` +
-      `Phosphofructokinase-1 (PFK-1) acts as the primary regulatory pacemaker for the glycolytic pathway [p.14 · BIO-201]. High concentrations of intracellular ATP allosterically inhibit the enzyme by binding to a low-affinity regulatory site, lowering its affinity for fructose-6-phosphate.\n\n` +
-      `Conversely, AMP relieves this inhibition during low energy states [p.16 · BIO-201].`;
-
-    const sampleCite: Citation = {
-      chunkId: 'chunk-demo-1',
-      documentId: 'doc-demo-1',
-      documentTitle: 'BIO-201 Cell Biology Lecture Notes.pdf',
-      pageNumber: 14,
-      sectionHeading: 'Allosteric Regulation of Glycolysis',
-      content:
-        'Phosphofructokinase-1 (PFK-1) is the critical rate-limiting enzyme. ATP is both a substrate and an allosteric inhibitor. When ATP levels are high, it binds to allosteric sites and inhibits PFK-1, slowing down glycolysis.',
-      score: 0.94,
-    };
-
-    let charIndex = 0;
-    const interval = setInterval(() => {
-      if (charIndex < sampleAnswer.length) {
-        simulatedText += sampleAnswer[charIndex];
-        setStreamingText(simulatedText);
-        charIndex++;
-      } else {
-        clearInterval(interval);
-        setIsStreaming(false);
-        setActiveCitation(sampleCite);
-      }
-    }, 15);
-  };
 
   const handleSuggestionClick = (query: string) => {
     setInputMessage(query);
@@ -290,6 +227,13 @@ export function Chat() {
                   <span>Available again in {rateLimitInfo.retryAfter}s</span>
                 </div>
               </div>
+            </div>
+          )}
+
+          {chatError && (
+            <div className="p-4 rounded-card bg-danger/10 border border-danger/30 text-danger text-xs sm:text-sm flex items-start gap-3">
+              <AlertTriangle size={18} className="shrink-0 mt-0.5" />
+              <div className="font-bold">{chatError}</div>
             </div>
           )}
 

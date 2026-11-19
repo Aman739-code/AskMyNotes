@@ -17,118 +17,34 @@ export function StudyTools() {
   const [mode, setMode] = useState<'hub' | 'deck' | 'quiz'>('hub');
   const [isGeneratingCards, setIsGeneratingCards] = useState(false);
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
+  const [studyError, setStudyError] = useState<string | null>(null);
 
   // Fetch available documents
   const { data: documents = [] } = useQuery<Document[]>({
     queryKey: ['documents'],
     queryFn: async () => {
-      try {
-        return await api.get<Document[]>('/documents');
-      } catch {
-        return [
-          {
-            id: 'doc-demo-1',
-            userId: '00000000-0000-0000-0000-000000000001',
-            title: 'BIO-201 Cell Biology Lecture Notes.pdf',
-            filePath: '',
-            mimeType: 'application/pdf',
-            sizeBytes: 1024,
-            pageCount: 24,
-            status: 'ready',
-            progress: 100,
-            errorMessage: null,
-            createdAt: new Date().toISOString(),
-          },
-          {
-            id: 'doc-demo-2',
-            userId: '00000000-0000-0000-0000-000000000001',
-            title: 'Macroeconomics Chapter 4 & 5.md',
-            filePath: '',
-            mimeType: 'text/markdown',
-            sizeBytes: 850,
-            pageCount: 12,
-            status: 'ready',
-            progress: 100,
-            errorMessage: null,
-            createdAt: new Date().toISOString(),
-          },
-        ];
-      }
+      return api.get<Document[]>('/documents');
     },
   });
 
   const activeDocId = selectedDocId || (documents.length > 0 ? documents[0].id : '');
   const currentDoc = documents.find((d) => d.id === activeDocId);
 
-  // Flashcards for current doc
-  const [flashcards, setFlashcards] = useState<Flashcard[]>([
-    {
-      id: 'fc-1',
-      documentId: 'doc-demo-1',
-      userId: 'user',
-      front: 'What is the committed step of glycolysis and which enzyme catalyzes it?',
-      back: 'The conversion of fructose-6-phosphate to fructose-1,6-bisphosphate, catalyzed by phosphofructokinase-1 (PFK-1).',
-      ease: 2.5,
-      dueAt: new Date().toISOString(),
-    },
-    {
-      id: 'fc-2',
-      documentId: 'doc-demo-1',
-      userId: 'user',
-      front: 'What effect does high intracellular ATP concentration have on PFK-1?',
-      back: 'High ATP acts as an allosteric inhibitor, binding to regulatory sites to decrease enzyme affinity for substrate.',
-      ease: 2.5,
-      dueAt: new Date().toISOString(),
-    },
-    {
-      id: 'fc-3',
-      documentId: 'doc-demo-1',
-      userId: 'user',
-      front: 'What is the net generation of ATP per molecule of glucose entering aerobic glycolysis?',
-      back: 'A net gain of 2 ATP molecules (4 produced, 2 consumed in investment phase).',
-      ease: 2.5,
-      dueAt: new Date().toISOString(),
-    },
-  ]);
-
-  // Quiz questions for current doc
-  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([
-    {
-      id: 'q-1',
-      question: 'Which enzyme catalyzes the rate-limiting step of glycolysis?',
-      options: ['Hexokinase', 'Phosphofructokinase-1', 'Pyruvate kinase', 'Aldolase'],
-      correctIndex: 1,
-      explanation: 'PFK-1 catalyzes the phosphorylation of fructose-6-phosphate, which is the main committed pacemaker step.',
-      pageNumber: 14,
-    },
-    {
-      id: 'q-2',
-      question: 'Which molecule acts as an allosteric activator of PFK-1?',
-      options: ['ATP', 'Citrate', 'Fructose-2,6-bisphosphate', 'Glucose-6-phosphate'],
-      correctIndex: 2,
-      explanation: 'Fructose-2,6-bisphosphate is the most potent allosteric activator of PFK-1, overcoming ATP inhibition.',
-      pageNumber: 16,
-    },
-    {
-      id: 'q-3',
-      question: 'Where in the eukaryotic cell does glycolysis take place?',
-      options: ['Mitochondrial matrix', 'Cytoplasm / Cytosol', 'Endoplasmic reticulum', 'Inner membrane space'],
-      correctIndex: 1,
-      explanation: 'Glycolysis is an anaerobic cytosolic process that takes place in the fluid cytoplasm.',
-      pageNumber: 8,
-    },
-  ]);
+  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
 
   const handleGenerateCards = async () => {
     if (!activeDocId) return;
     setIsGeneratingCards(true);
+    setStudyError(null);
     try {
       const res = await api.post<Flashcard[]>(`/documents/${activeDocId}/flashcards`, { count: 10 });
       if (Array.isArray(res) && res.length > 0) {
         setFlashcards(res);
       }
     } catch {
-      // Keep demo flashcards
+      setFlashcards([]);
+      setStudyError('Could not generate flashcards. Check that the document has finished processing and try again.');
     } finally {
       setIsGeneratingCards(false);
       setMode('deck');
@@ -138,13 +54,15 @@ export function StudyTools() {
   const handleGenerateQuiz = async () => {
     if (!activeDocId) return;
     setIsGeneratingQuiz(true);
+    setStudyError(null);
     try {
       const res = await api.post<QuizQuestion[]>(`/documents/${activeDocId}/quiz`, { count: 5 });
       if (Array.isArray(res) && res.length > 0) {
         setQuizQuestions(res);
       }
     } catch {
-      // Keep demo quiz
+      setQuizQuestions([]);
+      setStudyError('Could not generate the quiz. Check that the document has finished processing and try again.');
     } finally {
       setIsGeneratingQuiz(false);
       setMode('quiz');
@@ -168,6 +86,11 @@ export function StudyTools() {
 
       {mode === 'hub' && (
         <div className="space-y-8">
+          {studyError && (
+            <div className="rounded-card border border-danger/30 bg-danger/[0.08] p-4 text-sm text-danger">
+              {studyError}
+            </div>
+          )}
           {/* Document Picker */}
           <div className="space-y-3">
             <label className="text-xs font-mono uppercase tracking-wider text-ink/60 dark:text-paper/60 font-semibold">

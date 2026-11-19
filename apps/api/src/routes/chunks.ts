@@ -42,16 +42,7 @@ chunksRouter.get('/:id', async (req: Request, res: Response) => {
   // Fallback in-memory
   const chunk = inMemoryChunksStore.find((c) => (c.id === id || c.contentHash.startsWith(id)) && c.userId === userId);
   if (!chunk) {
-    // Return sample chunk for testing
-    res.json({
-      id,
-      documentId: 'doc-demo-1',
-      documentTitle: 'BIO-201 Cell Biology Lecture Notes.pdf',
-      content: 'Phosphofructokinase-1 (PFK-1) is the critical rate-limiting enzyme. ATP is both a substrate and an allosteric inhibitor.',
-      pageNumber: 14,
-      sectionHeading: 'Allosteric Regulation of Glycolysis',
-      tokenCount: 65,
-    });
+    throw new AppError(404, 'Citation chunk not found');
     return;
   }
 

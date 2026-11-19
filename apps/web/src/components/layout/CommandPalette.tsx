@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Search, BookOpen, MessageSquare, Plus, Sparkles, X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -16,14 +17,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   const { data: documents = [] } = useQuery({
     queryKey: ['documents'],
     queryFn: async () => {
-      try {
-        return await api.get<Array<{ id: string; title: string }>>('/documents');
-      } catch {
-        return [
-          { id: 'doc-demo-1', title: 'Lecture 4 - Bioenergetics.pdf' },
-          { id: 'doc-demo-2', title: 'Econ Chapter 3.md' },
-        ];
-      }
+      return api.get<Array<{ id: string; title: string }>>('/documents');
     },
     enabled: isOpen,
   });
@@ -31,14 +25,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   const { data: conversations = [] } = useQuery({
     queryKey: ['conversations'],
     queryFn: async () => {
-      try {
-        return await api.get<Array<{ id: string; title: string }>>('/conversations');
-      } catch {
-        return [
-          { id: 'conv-demo-1', title: 'Cell Respiration & Glycolysis' },
-          { id: 'conv-demo-2', title: 'Macroeconomics Midterm Review' },
-        ];
-      }
+      return api.get<Array<{ id: string; title: string }>>('/conversations');
     },
     enabled: isOpen,
   });
@@ -67,9 +54,13 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     onClose();
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-ink/40 dark:bg-black/60 backdrop-blur-xs animate-fade-in">
-      <div className="w-full max-w-xl rounded-card bg-paper dark:bg-night border-2 border-ink dark:border-paper/20 shadow-offset overflow-hidden">
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[100] h-[100dvh] w-[100vw] flex items-start justify-center pt-20 px-4 bg-ink/75 dark:bg-black/85 backdrop-blur-sm animate-fade-in"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="relative z-[101] w-full max-w-xl rounded-card bg-paper dark:bg-night border-2 border-ink dark:border-paper/20 shadow-offset overflow-hidden">
         {/* Search Input Bar */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-ink/10 dark:border-paper/10">
           <Search size={18} className="text-ink/50 dark:text-paper/50" />
@@ -170,6 +161,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
           <span>ESC to close</span>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

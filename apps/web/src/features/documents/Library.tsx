@@ -16,42 +16,10 @@ export function Library() {
   const [selectedDocIds, setSelectedDocIds] = useState<string[]>([]);
 
   // Fetch documents with polling if any are currently processing
-  const { data: documents = [], isLoading, refetch } = useQuery<Document[]>({
+  const { data: documents = [], isLoading, isError, error, refetch } = useQuery<Document[]>({
     queryKey: ['documents'],
     queryFn: async () => {
-      try {
-        return await api.get<Document[]>('/documents');
-      } catch {
-        // Mock fallback for interactive dev/testing
-        return [
-          {
-            id: 'doc-demo-1',
-            userId: '00000000-0000-0000-0000-000000000001',
-            title: 'BIO-201 Cell Biology Lecture Notes.pdf',
-            filePath: 'documents/00000000-0000-0000-0000-000000000001/bio-201.pdf',
-            mimeType: 'application/pdf',
-            sizeBytes: 3.4 * 1024 * 1024,
-            pageCount: 24,
-            status: 'ready',
-            progress: 100,
-            errorMessage: null,
-            createdAt: new Date(Date.now() - 3600000).toISOString(),
-          },
-          {
-            id: 'doc-demo-2',
-            userId: '00000000-0000-0000-0000-000000000001',
-            title: 'Macroeconomics Chapter 4 & 5.md',
-            filePath: 'documents/00000000-0000-0000-0000-000000000001/macro-ch4.md',
-            mimeType: 'text/markdown',
-            sizeBytes: 850 * 1024,
-            pageCount: 12,
-            status: 'ready',
-            progress: 100,
-            errorMessage: null,
-            createdAt: new Date(Date.now() - 7200000).toISOString(),
-          },
-        ];
-      }
+      return api.get<Document[]>('/documents');
     },
     refetchInterval: (query) => {
       const data = query.state.data as Document[] | undefined;
@@ -193,7 +161,16 @@ export function Library() {
       </div>
 
       {/* Document Grid or Empty State */}
-      {filteredDocs.length === 0 ? (
+      {isError ? (
+        <div className="border border-danger/30 rounded-card p-8 text-center bg-danger/[0.04]">
+          <h3 className="font-heading font-bold text-base text-danger mb-1">
+            Could not load your documents
+          </h3>
+          <p className="font-body text-xs text-ink/60 dark:text-paper/60">
+            {error instanceof Error ? error.message : 'The library API request failed.'}
+          </p>
+        </div>
+      ) : filteredDocs.length === 0 ? (
         <div className="border-2 border-dashed border-ink/15 dark:border-paper/15 rounded-card p-12 text-center bg-grid min-h-[260px] flex flex-col items-center justify-center">
           <div className="w-10 h-10 rounded-full bg-ink/5 dark:bg-paper/10 flex items-center justify-center text-ink/40 dark:text-paper/40 mb-3">
             <Filter size={20} strokeWidth={1.5} />

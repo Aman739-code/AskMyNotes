@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { UploadCloud, File, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { MAX_FILE_SIZE, MAX_PROCESSING_FILES } from '@askmynotes/shared';
-import { ApiError } from '@/lib/api';
+import { api, ApiError } from '@/lib/api';
 
 interface UploadZoneProps {
   onUploadSuccess: () => void;
@@ -42,15 +42,7 @@ export function UploadZone({ onUploadSuccess, processingCount }: UploadZoneProps
         formData.append('title', file.name.replace(/\.[^/.]+$/, ''));
 
         // Upload to API endpoint which saves to Supabase Storage and enqueues BullMQ job
-        const res = await fetch('/api/documents', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new ApiError(res.status, data.message || 'Upload failed', data);
-        }
+        await api.upload('/documents', formData);
 
         setSuccessMessage(`"${file.name}" uploaded successfully! Ingestion pipeline started.`);
         onUploadSuccess();
@@ -58,9 +50,7 @@ export function UploadZone({ onUploadSuccess, processingCount }: UploadZoneProps
         if (err instanceof ApiError && err.isRateLimited) {
           setUploadError(`Rate limit reached: ${err.message}. Retry in ${err.retryAfterSeconds || 60} seconds.`);
         } else {
-          // Dev / demo fallback
-          setSuccessMessage(`"${file.name}" queued for processing.`);
-          onUploadSuccess();
+          setUploadError(err?.message || `Failed to upload "${file.name}".`);
         }
       } finally {
         setIsUploading(false);

@@ -26,7 +26,7 @@ export function LandingPage({ onSignInSuccess }: LandingPageProps) {
           },
         });
         if (error) {
-          console.warn('OAuth redirect initiated or demo fallback:', error.message);
+          console.warn('OAuth redirect failed:', error.message);
         }
       }
       onSignInSuccess?.();

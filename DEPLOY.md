@@ -12,8 +12,8 @@ This step-by-step guide walks you through deploying AskMyNotes to production acr
 | **Backend API + Worker** | Render Free Web Service | 512 MB RAM, 0.1 CPU, spun down after 15m inactivity |
 | **Database & Auth** | Supabase Free | 500 MB Postgres database, pgvector, 1 GB Storage |
 | **Queue & Cache** | Upstash Redis | 10,000 commands / day, 256 MB storage |
-| **LLM & Embeddings** | Google Gemini (AI Studio) | 15 RPM for Gemini 1.5 Flash, 1500 RPD for text-embedding-004 |
-| **Fallback LLM** | Groq Cloud | 30 RPM, 14,400 RPD for Llama-3.1-8B-Instant |
+| **LLM & Embeddings** | Google Gemini (AI Studio) | `gemini-flash-lite-latest` and `gemini-embedding-001` |
+| **Fallback LLM** | Groq Cloud | `openai/gpt-oss-20b` |
 
 ---
 
@@ -116,4 +116,4 @@ The API server and BullMQ background worker run as co-located modules in a singl
 
 - **Render Cold Starts**: Render's free tier spins down the web service after 15 minutes of inactivity. The first request after idling may take ~30-45 seconds to wake up. Health checks will report status immediately once warm.
 - **Upstash Polling Tuning**: BullMQ worker settings have been tuned with `drainDelay: 500ms` and `stalledInterval: 60000ms` to prevent burning through Upstash's 10,000 daily commands during idle periods.
-- **Gemini Free Quota**: Google Gemini enforces a 15 RPM limit on free tier keys. AskMyNotes protects this with Upstash sliding-window rate limiting (20 requests / 60 seconds per user) and automatic fallback to Groq (`llama-3.1-8b-instant`).
+- **Gemini Free Quota**: AskMyNotes uses Gemini Flash Lite and `gemini-embedding-001`, with Groq `openai/gpt-oss-20b` as fallback.

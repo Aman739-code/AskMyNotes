@@ -1,5 +1,10 @@
 import { Message, Citation } from '@askmynotes/shared';
 import { User as UserIcon, Sparkles } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 
 interface MessageListProps {
   messages: Message[];
@@ -16,11 +21,10 @@ export function MessageList({
 }: MessageListProps) {
   // Renders message content and parses citation tags like [p.14 · bio.pdf] or {{cite:index}}
   const renderFormattedContent = (content: string, citations?: Citation[] | null) => {
-    // If citations are available, match citation tokens or display inline chips
     const parts = content.split(/(\[p\.\d+[^\]]*\])/g);
 
     return (
-      <div className="space-y-2 text-sm leading-relaxed text-ink dark:text-paper font-body">
+      <div className="chat-markdown space-y-2 text-sm leading-relaxed text-ink dark:text-paper font-body">
         {parts.map((part, i) => {
           const match = part.match(/\[p\.(\d+)([^\]]*)\]/);
           if (match && citations && citations.length > 0) {
@@ -37,7 +41,35 @@ export function MessageList({
               </button>
             );
           }
-          return <span key={i}>{part}</span>;
+          return (
+            <ReactMarkdown
+              key={i}
+              remarkPlugins={[remarkGfm, remarkMath]}
+              rehypePlugins={[rehypeKatex]}
+              components={{
+                p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                ul: ({ children }) => <ul className="mb-2 ml-5 list-disc space-y-1">{children}</ul>,
+                ol: ({ children }) => <ol className="mb-2 ml-5 list-decimal space-y-1">{children}</ol>,
+                strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+                em: ({ children }) => <em>{children}</em>,
+                code: ({ children }) => (
+                  <code className="rounded bg-ink/[0.08] px-1 py-0.5 font-mono text-[0.9em] dark:bg-paper/[0.10]">
+                    {children}
+                  </code>
+                ),
+                h1: ({ children }) => <h1 className="mt-3 mb-2 text-lg font-bold">{children}</h1>,
+                h2: ({ children }) => <h2 className="mt-3 mb-2 text-base font-bold">{children}</h2>,
+                h3: ({ children }) => <h3 className="mt-2 mb-1 text-sm font-bold">{children}</h3>,
+                blockquote: ({ children }) => (
+                  <blockquote className="my-2 border-l-2 border-acid pl-3 text-ink/80 dark:text-paper/80">
+                    {children}
+                  </blockquote>
+                ),
+              }}
+            >
+              {part}
+            </ReactMarkdown>
+          );
         })}
       </div>
     );
@@ -82,7 +114,7 @@ export function MessageList({
                       <span className="text-[11px] font-mono text-ink/50 dark:text-paper/50 self-center mr-1">
                         Sources:
                       </span>
-                      {message.citations.map((cite, idx) => (
+                      {message.citations.map((cite: Citation, idx: number) => (
                         <button
                           key={cite.chunkId || idx}
                           type="button"
@@ -120,9 +152,13 @@ export function MessageList({
               <span>Synthesizing from your notes...</span>
             </div>
 
-            <div className="text-sm font-body leading-relaxed text-ink dark:text-paper stream-caret whitespace-pre-wrap">
-              {streamingText || 'Searching and ranking retrieved chunks...'}
-            </div>
+            {streamingText ? (
+              <div className="stream-caret">{renderFormattedContent(streamingText)}</div>
+            ) : (
+              <div className="text-sm font-body leading-relaxed text-ink dark:text-paper stream-caret">
+                Searching and ranking retrieved chunks...
+              </div>
+            )}
           </div>
         </div>
       )}

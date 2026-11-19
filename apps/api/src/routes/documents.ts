@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs/promises';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import { MAX_FILE_SIZE, ALLOWED_MIME_TYPES, MAX_PROCESSING_FILES } from '@askmynotes/shared';
 import { requireAuth } from '../middleware/auth.js';
 import { rateLimitMiddleware } from '../lib/rateLimit/index.js';
@@ -15,6 +15,7 @@ import { createLogger } from '../lib/logger/index.js';
 
 const logger = createLogger('documentsRoute');
 export const documentsRouter = Router();
+const useSupabase = isSupabaseConfigured && process.env.NODE_ENV !== 'test';
 
 // Configure multer for file uploads
 const uploadDir = path.join(process.cwd(), 'uploads');
@@ -42,7 +43,7 @@ documentsRouter.use(requireAuth);
 documentsRouter.get('/', async (req: Request, res: Response) => {
   const userId = req.user!.id;
 
-  if (isSupabaseConfigured && supabase) {
+  if (useSupabase && supabase) {
     const { data, error } = await supabase
       .from('documents')
       .select('*')
@@ -93,7 +94,7 @@ documentsRouter.post(
 
     // Check user processing limit (max 5)
     let processingCount = 0;
-    if (isSupabaseConfigured && supabase) {
+    if (useSupabase && supabase) {
       const { count } = await supabase
         .from('documents')
         .select('*', { count: 'exact', head: true })
@@ -115,12 +116,12 @@ documentsRouter.post(
       );
     }
 
-    const documentId = uuidv4();
+    const documentId = randomUUID();
     const title = req.body.title || file.originalname.replace(/\.[^/.]+$/, '');
     const storagePath = `${userId}/${documentId}/${file.originalname}`;
 
     // Upload to Supabase Storage if configured
-    if (isSupabaseConfigured && supabase) {
+    if (useSupabase && supabase) {
       const fileBuffer = await fs.readFile(file.path);
       const { error: storageError } = await supabase.storage
         .from('documents')
@@ -130,10 +131,11 @@ documentsRouter.post(
         });
 
       if (storageError) {
-        logger.warn({ error: storageError.message }, 'Supabase Storage upload warning; continuing with local storage');
+        await fs.unlink(file.path).catch(() => {});
+        throw new AppError(500, `Failed to upload document to storage: ${storageError.message}`);
       }
 
-      await supabase.from('documents').insert({
+      const { error: insertError } = await supabase.from('documents').insert({
         id: documentId,
         user_id: userId,
         title,
@@ -143,6 +145,11 @@ documentsRouter.post(
         status: 'queued',
         progress: 0,
       });
+      if (insertError) {
+        await supabase.storage.from('documents').remove([storagePath]);
+        await fs.unlink(file.path).catch(() => {});
+        throw new AppError(500, `Failed to create document record: ${insertError.message}`);
+      }
     }
 
     // Store in in-memory map
@@ -186,7 +193,7 @@ documentsRouter.get('/:id/status', async (req: Request, res: Response) => {
   const { id } = req.params;
   const userId = req.user!.id;
 
-  if (isSupabaseConfigured && supabase) {
+  if (useSupabase && supabase) {
     const { data, error } = await supabase
       .from('documents')
       .select('id, status, progress, error_message')
@@ -229,7 +236,7 @@ documentsRouter.delete('/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   const userId = req.user!.id;
 
-  if (isSupabaseConfigured && supabase) {
+  if (useSupabase && supabase) {
     // 1. Get file path to delete from storage
     const { data: doc } = await supabase
       .from('documents')

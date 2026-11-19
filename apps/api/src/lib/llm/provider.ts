@@ -18,7 +18,7 @@ export interface LlmProvider {
 export class GeminiLlmProvider implements LlmProvider {
   name = 'gemini';
   private client: GoogleGenerativeAI | null = null;
-  private modelName = 'gemini-1.5-flash';
+  private modelName = 'gemini-flash-lite-latest';
 
   constructor(apiKey?: string) {
     const key = apiKey || process.env.GEMINI_API_KEY;
@@ -29,8 +29,7 @@ export class GeminiLlmProvider implements LlmProvider {
 
   async generateText(prompt: string, systemInstruction?: string): Promise<string> {
     if (!this.client) {
-      logger.warn('Gemini API key not configured, returning simulated response');
-      return this.fallbackSimulate(prompt);
+      throw new Error('Gemini API key not configured');
     }
 
     try {
@@ -54,14 +53,7 @@ export class GeminiLlmProvider implements LlmProvider {
 
   async generateStream(prompt: string, systemInstruction: string, callbacks: LlmStreamCallback): Promise<void> {
     if (!this.client) {
-      logger.warn('Gemini API key not configured, simulating stream');
-      const text = this.fallbackSimulate(prompt);
-      const chunks = text.split(' ');
-      for (const chunk of chunks) {
-        callbacks.onToken(chunk + ' ');
-        await new Promise((r) => setTimeout(r, 20));
-      }
-      callbacks.onDone();
+      callbacks.onError(new Error('Gemini API key not configured'));
       return;
     }
 
@@ -101,7 +93,7 @@ export class GeminiLlmProvider implements LlmProvider {
 export class GroqLlmProvider implements LlmProvider {
   name = 'groq';
   private apiKey?: string;
-  private modelName = 'llama-3.1-8b-instant';
+  private modelName = 'openai/gpt-oss-20b';
 
   constructor(apiKey?: string) {
     this.apiKey = apiKey || process.env.GROQ_API_KEY;

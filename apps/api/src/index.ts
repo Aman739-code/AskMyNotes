@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -12,6 +13,8 @@ import { chunksRouter } from './routes/chunks.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { requestIdMiddleware } from './middleware/requestId.js';
 import { startIngestionWorker } from './workers/ingestionWorker.js';
+import { requireAuth } from './middleware/auth.js';
+import { checkRateLimit } from './lib/rateLimit/index.js';
 
 const logger = createLogger('server');
 
@@ -46,6 +49,14 @@ app.use('/api/documents', documentsRouter);
 app.use('/api/chat', chatRouter);
 app.use('/api/conversations', conversationsRouter);
 app.use('/api/chunks', chunksRouter);
+app.get('/api/usage/limits', requireAuth, async (req, res) => {
+  const result = await checkRateLimit(req.user!.id, 'chat');
+  res.json({
+    remaining: result.remaining,
+    limit: 20,
+    resetSeconds: result.resetSeconds,
+  });
+});
 
 // Centralized Error Handling
 app.use(errorHandler);
@@ -58,8 +69,17 @@ if (process.env.NODE_ENV !== 'test') {
     logger.warn({ error: err.message }, 'Failed to start BullMQ worker');
   }
 
-  app.listen(port, () => {
+  const server = app.listen(port, () => {
     logger.info(`AskMyNotes API server running on port ${port}`);
+  });
+
+  server.on('error', (err: any) => {
+    if (err.code === 'EADDRINUSE') {
+      logger.error(`Port ${port} is already in use. Terminating existing process or select a different port via PORT=...`);
+      process.exit(1);
+    } else {
+      logger.error({ error: err.message }, 'Server listen error');
+    }
   });
 }
 
