@@ -1,14 +1,15 @@
 {
   "buildCommand": "npm install --include=dev && npm run build:api",
   "functions": {
-    "apps/api/api/index.ts": {
-      "maxDuration": 60
+    "api/index.ts": {
+      "maxDuration": 60,
+      "includeFiles": "packages/shared/dist/**"
     }
   },
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/apps/api/api/index.ts"
+      "destination": "/api"
     }
   ]
 }

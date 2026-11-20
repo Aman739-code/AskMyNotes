@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs/promises';
+import os from 'node:os';
 import { randomUUID } from 'node:crypto';
 import { MAX_FILE_SIZE, ALLOWED_MIME_TYPES, MAX_PROCESSING_FILES } from '@askmynotes/shared';
 import { requireAuth } from '../middleware/auth.js';
@@ -22,11 +23,19 @@ export const documentsRouter = Router();
 const useSupabase = isSupabaseConfigured && process.env.NODE_ENV !== 'test';
 
 // Configure multer for file uploads
-const uploadDir = path.join(process.cwd(), 'uploads');
-// Ensure uploads directory exists
+const uploadDir = process.env.VERCEL === '1' ? os.tmpdir() : path.join(process.cwd(), 'uploads');
 fs.mkdir(uploadDir, { recursive: true }).catch(() => {});
 
-const upload = multer({
+const upload = multer(
+  process.env.VERCEL === '1'
+    ? { storage: multer.memoryStorage(), limits: { fileSize: MAX_FILE_SIZE }, fileFilter: (_req, file, cb) => {
+        if (ALLOWED_MIME_TYPES.includes(file.mimetype as any)) {
+          cb(null, true);
+        } else {
+          cb(new AppError(400, 'Unsupported file type. Please upload a PDF, TXT, or Markdown file.'));
+        }
+      } }
+    : {
   dest: uploadDir,
   limits: { fileSize: MAX_FILE_SIZE },
   fileFilter: (_req, file, cb) => {
@@ -36,7 +45,8 @@ const upload = multer({
       cb(new AppError(400, 'Unsupported file type. Please upload a PDF, TXT, or Markdown file.'));
     }
   },
-});
+  },
+);
 
 // All document routes require authentication
 documentsRouter.use(requireAuth);
@@ -113,7 +123,7 @@ documentsRouter.post(
 
     if (processingCount >= MAX_PROCESSING_FILES) {
       // Remove temp file
-      await fs.unlink(file.path).catch(() => {});
+      if (file.path) await fs.unlink(file.path).catch(() => {});
       throw new AppError(
         429,
         `Maximum ${MAX_PROCESSING_FILES} documents can be processing at once. Please wait for current files to finish.`,
@@ -123,10 +133,16 @@ documentsRouter.post(
     const documentId = randomUUID();
     const title = req.body.title || file.originalname.replace(/\.[^/.]+$/, '');
     const storagePath = `${userId}/${documentId}/${file.originalname}`;
+    let serverlessTempPath: string | undefined;
+
+    if (process.env.VERCEL === '1') {
+      serverlessTempPath = path.join(os.tmpdir(), `${documentId}-${file.originalname}`);
+      await fs.writeFile(serverlessTempPath, file.buffer);
+    }
 
     // Upload to Supabase Storage if configured
     if (useSupabase && supabase) {
-      const fileBuffer = await fs.readFile(file.path);
+      const fileBuffer = process.env.VERCEL === '1' ? file.buffer : await fs.readFile(file.path);
       const { error: storageError } = await supabase.storage
         .from('documents')
         .upload(storagePath, fileBuffer, {
@@ -135,7 +151,8 @@ documentsRouter.post(
         });
 
       if (storageError) {
-        await fs.unlink(file.path).catch(() => {});
+        if (serverlessTempPath) await fs.unlink(serverlessTempPath).catch(() => {});
+        else if (file.path) await fs.unlink(file.path).catch(() => {});
         throw new AppError(500, `Failed to upload document to storage: ${storageError.message}`);
       }
 
@@ -151,7 +168,8 @@ documentsRouter.post(
       });
       if (insertError) {
         await supabase.storage.from('documents').remove([storagePath]);
-        await fs.unlink(file.path).catch(() => {});
+        if (serverlessTempPath) await fs.unlink(serverlessTempPath).catch(() => {});
+        else if (file.path) await fs.unlink(file.path).catch(() => {});
         throw new AppError(500, `Failed to create document record: ${insertError.message}`);
       }
     }
@@ -161,7 +179,7 @@ documentsRouter.post(
       id: documentId,
       userId,
       title,
-      filePath: file.path,
+      filePath: serverlessTempPath || file.path,
       mimeType: file.mimetype,
       sizeBytes: file.size,
       pageCount: null,
@@ -176,7 +194,7 @@ documentsRouter.post(
       await processDocumentIngestion({
         documentId,
         userId,
-        filePath: file.path,
+        filePath: serverlessTempPath!,
         title,
         mimeType: file.mimetype,
       });
