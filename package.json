@@ -16,7 +16,8 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "eval": "npm run eval -w apps/api",
-    "loadtest": "npm run loadtest -w apps/api"
+    "loadtest": "npm run loadtest -w apps/api",
+    "build:vercel": "npm run build -w packages/shared && npm run build -w apps/api && npm run build -w apps/web"
   },
   "engines": {
     "node": ">=18"
