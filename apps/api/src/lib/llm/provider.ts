@@ -58,21 +58,11 @@ export class GeminiLlmProvider implements LlmProvider {
     }
 
     try {
-      const model = this.client.getGenerativeModel({
-        model: this.modelName,
-        systemInstruction,
-        generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: 2048,
-        },
-      });
-
-      const responseStream = await model.generateContentStream(prompt);
-      for await (const chunk of responseStream.stream) {
-        const text = chunk.text();
-        if (text) {
-          callbacks.onToken(text);
-        }
+      const text = await this.generateText(prompt, systemInstruction);
+      const chunks = text.match(/.{1,40}(\s|$)/gs) || [text];
+      for (const chunk of chunks) {
+        callbacks.onToken(chunk);
+        await new Promise((resolve) => setTimeout(resolve, 8));
       }
       callbacks.onDone();
     } catch (err: any) {

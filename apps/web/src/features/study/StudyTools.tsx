@@ -42,9 +42,13 @@ export function StudyTools() {
       if (Array.isArray(res) && res.length > 0) {
         setFlashcards(res);
       }
-    } catch {
+    } catch (err: unknown) {
       setFlashcards([]);
-      setStudyError('Could not generate flashcards. Check that the document has finished processing and try again.');
+      setStudyError(
+        err instanceof Error
+          ? `Could not generate flashcards: ${err.message}`
+          : 'Could not generate flashcards. Check that the document has finished processing and try again.',
+      );
     } finally {
       setIsGeneratingCards(false);
       setMode('deck');
@@ -60,9 +64,13 @@ export function StudyTools() {
       if (Array.isArray(res) && res.length > 0) {
         setQuizQuestions(res);
       }
-    } catch {
+    } catch (err: unknown) {
       setQuizQuestions([]);
-      setStudyError('Could not generate the quiz. Check that the document has finished processing and try again.');
+      setStudyError(
+        err instanceof Error
+          ? `Could not generate the quiz: ${err.message}`
+          : 'Could not generate the quiz. Check that the document has finished processing and try again.',
+      );
     } finally {
       setIsGeneratingQuiz(false);
       setMode('quiz');

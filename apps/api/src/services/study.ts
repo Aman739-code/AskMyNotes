@@ -145,10 +145,11 @@ async function getDocumentChunks(documentId: string, userId: string) {
 
 function cleanJsonResponse(raw: string): string {
   let cleaned = raw.trim();
-  if (cleaned.startsWith('```json')) {
-    cleaned = cleaned.replace(/^```json\s*/, '').replace(/```\s*$/, '');
-  } else if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```\s*/, '').replace(/```\s*$/, '');
+  cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+  const arrayStart = cleaned.indexOf('[');
+  const arrayEnd = cleaned.lastIndexOf(']');
+  if (arrayStart >= 0 && arrayEnd > arrayStart) {
+    return cleaned.slice(arrayStart, arrayEnd + 1);
   }
   return cleaned;
 }

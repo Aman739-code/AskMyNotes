@@ -198,7 +198,7 @@ documentsRouter.post(
         title,
         mimeType: file.mimetype,
       });
-      await fs.unlink(file.path).catch(() => {});
+      await fs.unlink(serverlessTempPath!).catch(() => {});
     } else {
       await enqueueIngestionJob({
         documentId,
