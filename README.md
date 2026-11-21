@@ -237,10 +237,6 @@ p50 / p95 / p99:        0.02 ms / 0.10 ms / 0.51 ms
 
 ---
 
-## 🤝 Contributing
-
-Issues and pull requests are welcome. Run `npm run lint && npm run typecheck && npm test` before opening a PR.
-
 ## 📜 License
 
 MIT. Built for students who actually study.
