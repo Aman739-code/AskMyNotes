@@ -1,162 +1,254 @@
-# AskMyNotes
+<div align="center">
 
-> **Your notes have answers. Stop skimming.**
-> A production-quality, multi-tenant document Q&A and active-recall platform where students upload lecture notes, ask questions across documents, and receive streamed answers with exact page-level citations.
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=190&section=header&text=AskMyNotes&fontSize=64&fontColor=ffffff&animation=fadeIn&fontAlignY=36&desc=Your%20notes%20have%20answers.%20Stop%20skimming.&descSize=18&descAlignY=58" alt="AskMyNotes header" width="100%"/>
 
-[![CI](https://github.com/your-username/askmynotes/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/askmynotes/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript Strict](https://img.shields.io/badge/TypeScript-Strict%20Mode-blue.svg)](https://www.typescriptlang.org/)
+<a href="https://github.com/Aman739-code/AskMyNotes">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=20&pause=1100&color=A78BFA&center=true&vCenter=true&width=720&lines=Upload+your+lecture+notes+%E2%86%92+ask+anything;Streamed+answers+with+exact+page+citations;Hybrid+search%3A+pgvector+%2B+full-text+%2B+RRF;Flashcards+%26+quizzes+generated+from+your+notes;Gemini+first%2C+Groq+fallback+%E2%80%94+never+a+dead+end" alt="Typing animation" />
+</a>
+
+<br/><br/>
+
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-askmynotes--puce.vercel.app-7c3aed?style=for-the-badge&logo=vercel&logoColor=white)](https://askmynotes-puce.vercel.app)
+[![Stars](https://img.shields.io/github/stars/Aman739-code/AskMyNotes?style=for-the-badge&logo=github&color=f59e0b)](https://github.com/Aman739-code/AskMyNotes/stargazers)
+[![License](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge)](#-license)
+
+![React](https://img.shields.io/badge/React_18-20232A?style=flat-square&logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white)
+![Tailwind](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
+![Express](https://img.shields.io/badge/Express-000000?style=flat-square&logo=express&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=flat-square&logo=supabase&logoColor=white)
+![Postgres](https://img.shields.io/badge/pgvector-4169E1?style=flat-square&logo=postgresql&logoColor=white)
+![Redis](https://img.shields.io/badge/Upstash_Redis-DC382D?style=flat-square&logo=redis&logoColor=white)
+![Gemini](https://img.shields.io/badge/Google_Gemini-8E75B2?style=flat-square&logo=googlegemini&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-000000?style=flat-square&logo=vercel&logoColor=white)
+
+</div>
 
 ---
 
-## Live Demo & Screenshots
+## ✨ What is AskMyNotes?
 
-- **Live Application**: [https://askmynotes.vercel.app](https://askmynotes.vercel.app) *(Placeholder)*
-- **API Status & Health**: [https://askmynotes-api.onrender.com/health](https://askmynotes-api.onrender.com/health)
+AskMyNotes is a multi-tenant **document Q&A and active-recall platform for students**. Upload lecture notes, ask questions across your documents, and get **streamed answers with exact page-level citations**, then turn the same notes into flashcards and quizzes.
 
-```
+If the answer isn't in your notes, it says so. No guessing, no made-up sources.
+
+```text
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│  AskMyNotes · BIO-201_Cell_Biology_Final.pdf                    [⌘K] [☀ / ☾] │
+│  AskMyNotes · BIO-201_Cell_Biology_Final.pdf                                 │
 ├──────────────────────────┬─────────────────────────────────┬─────────────────┤
-│  RETRIEVAL SCOPE         │  CONVERSATION STREAM            │ CITATION SOURCE │
+│  RETRIEVAL SCOPE         │  CONVERSATION                   │ CITATION SOURCE │
 │                          │                                 │                 │
 │  [✓] All Documents (3)   │  Student:                       │ § Glycolysis    │
 │  [ ] Lecture 4 - Bio.pdf │  What is the rate-limiting      │ Page 14         │
 │  [ ] Macro Chapter 5.md  │  enzyme of glycolysis?          │                 │
 │                          │                                 │ "Phosphofructo- │
 │  ACTIONS                 │  AskMyNotes:                    │ kinase-1 (PFK-1)│
-│  + New Chat              │  The rate-limiting enzyme of    │ is the primary  │
-│  ⚙ Flashcards & Quiz     │  glycolysis is PFK-1            │ pacemaker..."   │
-│  📊 System Metrics       │  [p.14 · BIO-201.pdf] ───────►  │ [Copy]          │
+│  + New Chat              │  The rate-limiting enzyme is    │ is the primary  │
+│  ⚙ Flashcards & Quiz     │  PFK-1 [p.14 · BIO-201.pdf] ──► │ pacemaker..."   │
 └──────────────────────────┴─────────────────────────────────┴─────────────────┘
 ```
 
 ---
 
-## Core Features
+## 🚀 Features
 
-- **Google OAuth & Workspace**: Zero friction public onboarding with Supabase Auth and isolated per-user workspaces.
-- **Async Ingestion Pipeline**: Multipart uploads (PDF, TXT, MD up to 10 MB) return an immediate 202 status. BullMQ worker parses text, segments into ~500–800 token chunks with 12% overlap, computes SHA-256 hashes, batch-embeds vectors via Google Gemini `text-embedding-004`, and stores in pgvector.
-- **Hybrid Retrieval & RRF**: Combines pgvector cosine similarity with Postgres full-text search (`tsvector`), merged with Reciprocal Rank Fusion (`RRF k=60`) to eliminate single-retriever blindspots.
-- **Real-Time Streaming & Citations**: Answers stream via Server-Sent Events (SSE) with clickable inline citation chips like `[p.14 · bio.pdf]` that slide open the exact source chunk with passage highlights.
-- **Study Tools**: One-click generation of 10-card spaced repetition flashcard decks with 3D flip animation and "Again / Got it" ease tracking, plus 5-question multiple choice quizzes with instant grading and explanations.
-- **Multi-Tenant Row Level Security (RLS)**: Enforced across all Supabase Postgres tables and private storage buckets so cross-user access is impossible.
-- **Sliding-Window Rate Limiting**: Per-user limits backed by Upstash Redis to prevent free-tier quota exhaustion with clear countdown retry messages.
+| | Feature | Details |
+|---|---|---|
+| 🔐 | **Google sign-in & private workspaces** | Supabase Auth with isolated per-user data |
+| 📄 | **Smart ingestion** | PDF, TXT and MD up to 10 MB; text is split into ~650-token chunks with 12% overlap, SHA-256 hashed, and embedded (768-dim) |
+| 🔎 | **Hybrid retrieval** | pgvector cosine similarity + Postgres full-text search, merged with Reciprocal Rank Fusion (`k = 60`) |
+| ⚡ | **Streaming answers** | Server-Sent Events, with clickable `[p.14 · file.pdf]` citation chips that open the source passage |
+| 🧮 | **Math-ready answers** | Markdown + LaTeX (KaTeX) rendering for formulas |
+| 🃏 | **Flashcards** | One-click decks with flip animation and *Again / Got it* ease tracking |
+| 📝 | **Quizzes** | Multiple-choice questions with instant grading and explanations |
+| 🛡️ | **Row Level Security** | Enforced on every table and on private storage, so cross-user access is not possible |
+| 🚦 | **Rate limiting & caching** | Sliding-window limits and answer caching on Upstash Redis |
+| 🔁 | **LLM failover** | If Gemini fails, requests fall back to Groq automatically |
 
 ---
 
-## System Architecture
+## 🧠 How it works
+
+```mermaid
+flowchart LR
+    A([📄 Upload notes]) --> B[Parse text]
+    B --> C[Chunk ~650 tokens<br/>12% overlap]
+    C --> D[Embed with Gemini<br/>768-dim vectors]
+    D --> E[(Supabase<br/>pgvector + FTS)]
+
+    Q([❓ Question]) --> R[Hybrid search<br/>vector + full-text]
+    E --> R
+    R --> F[RRF merge<br/>top chunks]
+    F --> G[Gemini prompt<br/>strict context only]
+    G -. fails .-> H[Groq fallback]
+    G --> S([💬 Streamed answer<br/>+ page citations])
+    H --> S
+```
+
+### System architecture
 
 ```mermaid
 flowchart TD
     User["Student (Browser)"]
-    Vercel["Frontend (Vercel)<br/>React 18 + Vite + Tailwind CSS"]
-    Render["Backend API & Worker (Render Free)<br/>Node.js + Express + TypeScript"]
-    SupabaseAuth["Supabase Auth<br/>Google OAuth (JWT)"]
-    SupabaseDB["Supabase Postgres<br/>pgvector (HNSW) + Full-Text Search (GIN)"]
-    SupabaseStorage["Supabase Storage<br/>Private Bucket (Signed URLs)"]
-    UpstashRedis["Upstash Redis (Free Tier)<br/>BullMQ Queue + Sliding Window Rate Limiter + Cache"]
-    Gemini["Google Gemini API (Free Tier)<br/>text-embedding-004 & gemini-1.5-flash"]
-    Groq["Groq API (Free Tier Fallback)<br/>llama-3.1-8b-instant"]
+    Vercel["Vercel<br/>React 18 + Vite (static) · Express API (serverless function)"]
+    Auth["Supabase Auth<br/>Google OAuth (JWT)"]
+    DB["Supabase Postgres<br/>pgvector (HNSW) + full-text (GIN)"]
+    Storage["Supabase Storage<br/>private bucket"]
+    Redis["Upstash Redis<br/>rate limits + cache (+ BullMQ when self-hosted)"]
+    Gemini["Google Gemini<br/>embeddings + chat"]
+    Groq["Groq<br/>fallback LLM"]
 
-    User -->|"Google OAuth"| SupabaseAuth
-    User -->|"Web App UI"| Vercel
-    Vercel -->|"REST & SSE Streams"| Render
-    Render -->|"Verify Session"| SupabaseAuth
-    Render -->|"Ingestion Jobs & Rate Limits"| UpstashRedis
-    Render -->|"Upload / Read Files"| SupabaseStorage
-    Render -->|"Hybrid Search RPC & CRUD"| SupabaseDB
-    Render -->|"Embeddings & Chat Synthesis"| Gemini
-    Gemini -.->|"Failover on Quota"| Groq
+    User -->|"Google OAuth"| Auth
+    User -->|"Web app + /api"| Vercel
+    Vercel -->|"Verify session"| Auth
+    Vercel -->|"Hybrid search & CRUD"| DB
+    Vercel -->|"Files"| Storage
+    Vercel -->|"Limits & cache"| Redis
+    Vercel -->|"Embeddings & answers"| Gemini
+    Gemini -.->|"failover"| Groq
 ```
 
 ---
 
-## Tech Stack
+## 🛠️ Tech stack
 
-- **Frontend**: React 18, Vite, TypeScript (strict), Tailwind CSS, React Router 6, TanStack Query 5, Lucide Icons.
-- **Backend**: Node.js 20, Express, TypeScript (strict), Zod validation, Pino structured logging, Multer, `pdf-parse`.
-- **Database & Auth**: Supabase Postgres with `pgvector` (HNSW vector index) & GIN full-text index, Row Level Security.
-- **Queue & Cache**: BullMQ on Upstash Redis free tier.
-- **AI & Embeddings**: Google Gemini API (`text-embedding-004`, `gemini-1.5-flash`) with Groq (`llama-3.1-8b-instant`) fallback.
-- **Testing & CI**: Vitest, Supertest, GitHub Actions.
+| Layer | Tools |
+|---|---|
+| **Frontend** | React 18, Vite, TypeScript (strict), Tailwind CSS, React Router, TanStack Query, Zustand, react-markdown, KaTeX, Lucide |
+| **Backend** | Node.js, Express, TypeScript (strict), Zod, Pino, Multer, `pdf-parse` |
+| **Data & auth** | Supabase Postgres, pgvector (HNSW), GIN full-text index, Row Level Security, Supabase Auth and Storage |
+| **Queue & cache** | Upstash Redis, BullMQ (worker mode) |
+| **AI** | Google Gemini (`gemini-embedding-001` embeddings, `gemini-flash-lite-latest` chat) with Groq fallback |
+| **Quality** | Vitest, Supertest, ESLint, GitHub Actions |
+| **Monorepo** | npm workspaces: `apps/web`, `apps/api`, `packages/shared` |
 
 ---
 
-## Benchmark & Retrieval Evaluation
+## 📁 Project structure
 
-The included evaluation benchmark (`npm run eval`) measures retrieval accuracy and latency across strategies on university course notes:
-
-| Retrieval Strategy | Hit Rate @ 1 | Hit Rate @ 3 | Hit Rate @ 5 | Mean Latency |
-| :--- | :--- | :--- | :--- | :--- |
-| **Vector Only (pgvector cosine)** | 100.0% | 100.0% | 100.0% | 4.2 ms |
-| **Full-Text Only (Postgres tsvector)** | 100.0% | 100.0% | 100.0% | 2.8 ms |
-| **Hybrid Search (Vector + FTS + RRF)** | **100.0%** | **100.0%** | **100.0%** | **6.1 ms** |
-
-### Latency & Throughput Benchmark
-
-Real numbers measured with `npm run loadtest` (200 consecutive search queries and 5-page document ingestion):
-
-```
---- Benchmark Results ---
-Document Ingestion Time (5 pages): 0.82 ms
-Total Queries Tested:              200
-Throughput:                        28,905 queries/sec
-p50 Retrieval Latency:             0.02 ms
-p95 Retrieval Latency:             0.10 ms
-p99 Retrieval Latency:             0.51 ms
-Max Latency:                       0.66 ms
--------------------------
+```text
+AskMyNotes/
+├── api/                    # Vercel serverless entry (index.mjs)
+├── apps/
+│   ├── web/                # React + Vite frontend
+│   │   └── src/features/   # auth · chat · documents · study · settings · admin
+│   └── api/                # Express API
+│       └── src/            # routes · services · middleware · lib (llm, embeddings, cache)
+├── packages/shared/        # Shared types and constants
+├── supabase/migrations/    # SQL schema + storage policies
+├── docs/architecture.md
+└── vercel.json
 ```
 
 ---
 
-## Design Decisions & Tradeoffs
-
-1. **Why Hybrid Search + Reciprocal Rank Fusion (RRF)?**
-   - *Decision*: Combine pgvector HNSW cosine similarity with Postgres `tsvector` full-text search merged via `1 / (60 + rank)`.
-   - *Tradeoff*: Increases search execution time by ~2ms compared to pure vector search, but eliminates keyword omission issues (e.g., specific chemical formulas, acronyms, or proper nouns) while preserving semantic understanding.
-2. **Why Upstash Redis for BullMQ on Free Tier?**
-   - *Decision*: A single BullMQ queue with tuned worker settings (`drainDelay: 500ms`, `stalledInterval: 60s`, `removeOnComplete: 50`).
-   - *Tradeoff*: Upstash free tier allows 10,000 commands/day. Default BullMQ polling would consume this in hours. Tuned polling keeps daily command usage under 1,500 commands while maintaining sub-second ingestion dispatch.
-3. **Co-located API and Worker on Render Free Tier**:
-   - *Decision*: Both the Express REST server and the BullMQ worker execute within the same Node.js service instance.
-   - *Tradeoff*: Eliminates the need for a second paid web service or background worker instance on Render. If the process is killed due to memory pressure, BullMQ retries the job on restart.
-4. **Resilient LLM Failover**:
-   - *Decision*: If Google Gemini rate limits (15 RPM free tier), the client transparently falls back to Groq Cloud (`llama-3.1-8b-instant`).
-   - *Tradeoff*: Groq response quality on rare technical terminology is slightly different from Gemini, but prevents any user query from failing with a 500 error.
-
----
-
-## Local Setup in Under 5 Commands
+## ⚡ Quick start
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/your-username/askmynotes.git && cd askMyNotes
+# 1. Clone
+git clone https://github.com/Aman739-code/AskMyNotes.git && cd AskMyNotes
 
-# 2. Install dependencies across all monorepo packages
+# 2. Install all workspaces
 npm install
 
-# 3. Copy environment configuration
-cp apps/api/.env.example apps/api/.env && cp apps/web/.env.example apps/web/.env
+# 3. Configure environment
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env
 
-# 4. Run automated test suites to verify setup
+# 4. Verify everything works
 npm test
 
-# 5. Start development servers (frontend on :5173, backend on :3001)
+# 5. Run frontend (:5173) and API (:3001)
 npm run dev
 ```
 
----
-
-## Free-Tier Limits & Known Caveats
-
-- **Render Cold Starts**: On Render's free tier, the web service spins down after 15 minutes of inactivity. Initial connection after inactivity may take 30–45s to wake up.
-- **File Upload Limits**: Max 10 MB per document; max 5 documents processing concurrently per user.
-- **Rate Limits**: 20 chat queries/minute, 10 uploads/5 minutes per user. The UI displays friendly countdown messages if reached.
+> Without Supabase or Gemini keys the API falls back to an in-memory layer and deterministic embeddings, so you can explore the app locally before wiring up services.
 
 ---
 
-## License
+## ☁️ Deploy to Vercel (web + API in one project)
 
-MIT License. Designed and engineered for students who actually study.
+The frontend is served as static files and the Express API runs as a serverless function on the **same domain**.
+
+1. Import the repo on Vercel and leave **Root Directory** at the repo root.
+2. Set **Framework Preset** to **Other** (build settings come from `vercel.json`).
+3. Add environment variables:
+
+| Variable | Notes |
+|---|---|
+| `VITE_API_URL` | `/api` (type: *Config*, not Secret) |
+| `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | public Supabase values (type: *Config*) |
+| `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | server-side (Secret) |
+| `REDIS_URL` | Upstash connection string |
+| `GEMINI_API_KEY`, `GROQ_API_KEY` | LLM keys |
+| `CORS_ORIGIN` | your deployed URL |
+| `NODE_ENV` | `production` |
+
+4. In Supabase → **Authentication → URL Configuration**, set the **Site URL** to your Vercel URL and add `https://<your-domain>/**` under **Redirect URLs**.
+
+**Serverless notes:** there is no background worker on Vercel, so ingestion runs inside the upload request. Vercel's request body limit is 4.5 MB, so larger files need a self-hosted API or direct-to-storage uploads.
+
+---
+
+<details>
+<summary><b>📊 Benchmarks &amp; retrieval evaluation</b></summary>
+
+<br/>
+
+Run `npm run eval` and `npm run loadtest` to reproduce.
+
+| Retrieval strategy | Hit@1 | Hit@3 | Hit@5 | Mean latency |
+|:---|:---:|:---:|:---:|:---:|
+| Vector only (pgvector cosine) | 100% | 100% | 100% | 4.2 ms |
+| Full-text only (tsvector) | 100% | 100% | 100% | 2.8 ms |
+| **Hybrid (vector + FTS + RRF)** | **100%** | **100%** | **100%** | **6.1 ms** |
+
+```text
+Total queries tested:   200
+Throughput:             28,905 queries/sec
+p50 / p95 / p99:        0.02 ms / 0.10 ms / 0.51 ms
+```
+
+</details>
+
+<details>
+<summary><b>🧩 Design decisions &amp; trade-offs</b></summary>
+
+<br/>
+
+1. **Hybrid search + RRF.** Vector search understands meaning; full-text search catches exact acronyms, formulas and proper nouns. Merging with `1 / (60 + rank)` costs a couple of milliseconds and removes single-retriever blind spots.
+2. **Resilient LLM failover.** If Gemini errors or hits its free-tier limit, the request falls back to Groq so users don't see a hard failure. Answer style may differ slightly between providers.
+3. **Tuned queue polling for a free Redis tier.** The BullMQ worker uses a longer drain delay and stalled interval to stay within Upstash's daily command budget.
+4. **Strict-context prompting.** The model is told to answer only from retrieved chunks and to say *"I couldn't find this in your notes"* otherwise, which keeps citations trustworthy.
+
+</details>
+
+<details>
+<summary><b>⚠️ Limits &amp; known caveats</b></summary>
+
+<br/>
+
+- Max **10 MB** per document (4.5 MB on Vercel serverless) and 5 documents processing at once per user.
+- Free-tier LLM quotas apply; the Groq fallback absorbs most spikes.
+- Rate limits protect shared quotas, and the UI shows a retry countdown when one is hit.
+
+</details>
+
+---
+
+## 🤝 Contributing
+
+Issues and pull requests are welcome. Run `npm run lint && npm run typecheck && npm test` before opening a PR.
+
+## 📜 License
+
+MIT. Built for students who actually study.
+
+<div align="center">
+
+**If AskMyNotes helps you study, give it a ⭐**
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=110&section=footer" alt="footer" width="100%"/>
+
+</div>
